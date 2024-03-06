@@ -67,7 +67,7 @@ float na = 0;
 float na_t1 = 0;
 float na_t2 = 0;
 float ma;
-KMF kf; // KMF 구조체 인스턴스 선언
+KMF kf; // KMF 구조�?? ?��?��?��?�� ?��?��
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,8 +85,8 @@ int _write(int file, char* p, int len){
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-	float alpha = 0.1; // 평활화 상수
-	float ewma_value = 0; // 초기 EWMA 값은 0으로 설정 (또는 첫 번째 읽은 값으로 초기화)
+	float alpha = 0.1; // ?��?��?�� ?��?��
+	float ewma_value = 0; // 초기 EWMA 값�? 0?���?? ?��?�� (?��?�� �?? 번째 ?��?? 값으�?? 초기?��)
 	float new_measurement;
 /* USER CODE END 0 */
 
@@ -108,7 +108,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  KMF_Init(&kf, 0.0, 1.0, 2.0); // kf 인스턴스 초기화
+  KMF_Init(&kf, 0.0, 1.0, 0.1); // kf ?��?��?��?�� 초기?��
   //HighPassFilter_Init;
   /* USER CODE END Init */
 
@@ -265,7 +265,7 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 819;
+  htim3.Init.Prescaler = 899;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 99;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -378,7 +378,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  KMF_Update(&kf, lpf_filtered_emg);
 	  float filtered_emg = kf.estimate;
 
-	  printf("%f\r\n" emg_raw);
+	  //printf("%f\r\n", emg_raw);
 	  //printf("%"PRId16"\r\n", emg_rec);
 	  //printf("%"PRId32"\r\n", emg_sca);
 	  /*na_t1 = na;
@@ -388,12 +388,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  //printf("%" PRId32 "\r\n", emg_raw);
 	  //printf("%" PRId16, (int16_t)emg_rec);
 	  //printf(",");
-	  /*printf("%f", lpf_filtered_emg);
-	  printf(",");
-	  printf("%f\r\n", lpf_filtered_emg);*/
+	  //printf("%f", emg_rec);
 	  //printf(",");
-	  //printf("%" PRId16"\r\n", (int16_t)filtered_emg);
-	  //printf("%f\r\n", filtered_emg_raw);
+	  printf("%f", filtered_emg_raw);
+	  printf(",");
+	  printf("%f\r\n", lpf_filtered_emg);
+	  //printf(",");
+	  //printf("%f\r\n", filtered_emg);
 	  //printf("%f\r\n", na);
 	  }
 }
