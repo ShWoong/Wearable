@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <math.h>
-#include "Filters.h""
+#include "Filters.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,9 +52,6 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-float emg_raw;
-float emg_sca;
-float emg_rec;
 float gma1 = 0.7;
 float gma2 = -0.4;
 float bet1;
@@ -85,7 +82,7 @@ int _write(int file, char* p, int len){
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-	float alpha = 0.1; // ?��?��?�� ?��?��
+	float alpha = 0.5; // ?��?��?�� ?��?��
 	float ewma_value = 0; // 초기 EWMA 값�? 0?���?? ?��?�� (?��?�� �?? 번째 ?��?? 값으�?? 초기?��)
 	float new_measurement;
 /* USER CODE END 0 */
@@ -366,17 +363,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance==TIM3)
 	  {
-	  emg_raw = HAL_ADC_GetValue(&hadc1);
+	  float emg_raw = HAL_ADC_GetValue(&hadc1);
 	  float filtered_emg_raw =BWHPF(emg_raw);
 	  //float_filtered_emg_raw = HighPassFilter_Process(emg_raw);
-	  emg_rec = abs(filtered_emg_raw);
+	  float emg_rec = abs(filtered_emg_raw);
 	  //float filtered_emg = lowPassFilter(emg_rec);
-	  float lpf_filtered_emg = FIRF_Process(emg_rec);
+	  float lpf_filtered_emg = BWLPF(emg_rec);
+	  //float lpf_filtered_emg = applyLowPassFilter(emg_rec);
 	  //float new_sample = lpf_filtered_emg;
 	  //float filtered_emg = moving_average_filter(new_sample);
 	  //float filtered_emg = EWMAF(lpf_filtered_emg, ewma_value, alpha);
-	  KMF_Update(&kf, lpf_filtered_emg);
-	  float filtered_emg = kf.estimate;
+	  float filtered_emg = MAF(lpf_filtered_emg);
+
 
 	  //printf("%f\r\n", emg_raw);
 	  //printf("%"PRId16"\r\n", emg_rec);
@@ -390,11 +388,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  //printf(",");
 	  //printf("%f", emg_rec);
 	  //printf(",");
-	  printf("%f", filtered_emg_raw);
-	  printf(",");
-	  printf("%f\r\n", lpf_filtered_emg);
+	  //printf("%f\r\n", filtered_emg_raw);
+	  //printf("%f\r\n", emg_rec);
 	  //printf(",");
-	  //printf("%f\r\n", filtered_emg);
+	  //printf("%f", lpf_filtered_emg);
+	  //printf(",");
+	  //printf("%f\r\n", lpf_filtered_emg);
 	  //printf("%f\r\n", na);
 	  }
 }

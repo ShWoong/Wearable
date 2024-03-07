@@ -6,7 +6,7 @@
 #define FILTER_ORDER 2
 #define SECTIONS 2
 #define FILTER_TAP_NUM 100
-#define SAMPLE_SIZE 100
+#define SAMPLE_SIZE 50
 #define FILTER_TAP_NUM 100
 #define HPFILTER_TAP_NUM 101
 
@@ -20,6 +20,7 @@ float EWMAF(float new_measurement, float prev_ewma, float alpha);
 
 void HighPassFilter_Init(void);
 float HighPassFilter_Process(float input);
+float applyLowPassFilter(float input);
 
 typedef struct {
     float estimate;
