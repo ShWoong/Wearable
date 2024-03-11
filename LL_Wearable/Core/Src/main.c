@@ -52,22 +52,22 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-double emg_raw = 0;
-double filtered_emg_raw =0;
-double emg_rec = 0;
-double filtered_emg = 0;
-double gma1 = -0.75;
-double gma2 = -0.125;
-double bet1;
-double bet2;
-double alp;
-double k;
-double d = 0.04;
-double A = -1;
-double na = 0;
-double na_t1 = 0;
-double na_t2 = 0;
-double ma;
+int32_t emg_raw = 0;
+int32_t filtered_emg_raw =0;
+int32_t emg_rec = 0;
+int32_t filtered_emg = 0;
+int32_t gma1 = -0.75;
+int32_t gma2 = -0.125;
+int32_t bet1;
+int32_t bet2;
+int32_t alp;
+int32_t k;
+int32_t d = 0.04;
+int32_t A = -1;
+int32_t na = 0;
+int32_t na_t1 = 0;
+int32_t na_t2 = 0;
+int32_t ma;
 KMF kf; // KMF 구조�??? ?��?��?��?�� ?��?��
 /* USER CODE END PV */
 
