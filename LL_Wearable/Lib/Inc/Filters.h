@@ -10,8 +10,8 @@
 #define FILTER_TAP_NUM 100
 #define HPFILTER_TAP_NUM 101
 
-float BWHPF(float input);
-float BWLPF(float input);
+int32_t BWHPF(float input);
+int32_t BWLPF(float input);
 
 void FIRF_Init(void);
 float FIRF_Process(float input);
