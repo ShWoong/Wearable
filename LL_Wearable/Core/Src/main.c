@@ -367,14 +367,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance==TIM3)
 	  {
-	  int32_t emg_raw = HAL_ADC_GetValue(&hadc1);
-	  int32_t filtered_emg_raw =BWHPF(emg_raw);
-	  int32_t emg_rec = abs(filtered_emg_raw);
-	  int32_t filtered_emg = BWLPF(emg_rec);
+	  emg_raw = HAL_ADC_GetValue(&hadc1);
+	  filtered_emg_raw =BWHPF(emg_raw);
+	  emg_rec = abs(filtered_emg_raw);
+	  filtered_emg = BWLPF(emg_rec);
 
-	  //printf("%f\r\n", emg_raw);
-	  //printf("%"PRId16"\r\n", emg_rec);
-	  //printf("%"PRId32"\r\n", emg_sca);
 	  na_t2 = na_t1;
 	  na_t1 = na;
 	  na = alp*filtered_emg - bet1*na_t1 - bet2*na_t2;
