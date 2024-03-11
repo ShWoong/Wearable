@@ -1,13 +1,13 @@
 
 #include "Filters.h"
 
-int32_t hpf_x_buffer[SECTIONS][2] = {0};
-int32_t hpf_y_buffer[SECTIONS][2] = {0};
-int32_t lpf_x_buffer[SECTIONS][2] = {0};
-int32_t lpf_y_buffer[SECTIONS][2] = {0};
+double hpf_x_buffer[SECTIONS][2] = {0};
+double hpf_y_buffer[SECTIONS][2] = {0};
+double lpf_x_buffer[SECTIONS][2] = {0};
+double lpf_y_buffer[SECTIONS][2] = {0};
 
 
-int32_t hpf_sos[SECTIONS][6] = {
+double hpf_sos[SECTIONS][6] = {
     {0.78136727, -1.56273453,  0.78136727, 1.0, -1.67466095, 0.70485868},
     {1.0, -2.0,  1.0, 1.0, -1.83312526, 0.86618045} //30Hz
 	/*{0.8484753, -1.69695059, 0.8484753, 1.0, -1.77831349, 0.79244747},
@@ -18,7 +18,7 @@ int32_t hpf_sos[SECTIONS][6] = {
 	{1.0, -2.0, 1.0, 1.0, -1.99516324, 0.99520262}*/ //1Hz
 };
 
-int32_t lpf_sos[SECTIONS][6] = {
+double lpf_sos[SECTIONS][6] = {
 	/*{0.06290094, 0.12580189, 0.06290094, 1.0, -0.1964664, 0.0484845},
 	{1.0, 2.0, 1.0, 1.0, -0.27237536, 0.45358867}*/ //220Hz
     /*{1.20231162e-07, 2.40462324e-07, 1.20231162e-07, 1.0, -1.93132782, 0.932701053},
@@ -39,10 +39,10 @@ int32_t lpf_sos[SECTIONS][6] = {
 	{1.0, 2.0, 1.0, 1.0, -1.99951883, 0.99951922}*/ //0.1Hz
 };
 
-int32_t BWHPF(int32_t input) {
-	int32_t output = 0;
+double BWHPF(double input) {
+	double output = 0;
     for (int i = 0; i < SECTIONS; i++) {
-    	int32_t xn = (i == 0) ? input : output;
+    	double xn = (i == 0) ? input : output;
 
         output = hpf_sos[i][0] * xn + hpf_sos[i][1] * hpf_x_buffer[i][0] + hpf_sos[i][2] * hpf_x_buffer[i][1]
                  - hpf_sos[i][4] * hpf_y_buffer[i][0] - hpf_sos[i][5] * hpf_y_buffer[i][1];
@@ -55,10 +55,10 @@ int32_t BWHPF(int32_t input) {
     return output;
 }
 
-int32_t BWLPF(int32_t input) {
-	int32_t output = 0;
+double BWLPF(double input) {
+	double output = 0;
     for (int i = 0; i < SECTIONS; i++) {
-    	int32_t xn = (i == 0) ? input : output;
+    	double xn = (i == 0) ? input : output;
 
         output = lpf_sos[i][0] * xn + lpf_sos[i][1] * lpf_x_buffer[i][0] + lpf_sos[i][2] * lpf_x_buffer[i][1]
                  - lpf_sos[i][4] * lpf_y_buffer[i][0] - lpf_sos[i][5] * lpf_y_buffer[i][1];

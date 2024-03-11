@@ -4,7 +4,6 @@
 
 #include <stdint.h>
 
-#define SCALE_FACTOR 65536 //2^16 16bit a fixed point
 #define FILTER_ORDER 2
 #define SECTIONS 2
 /*#define FILTER_TAP_NUM 100
@@ -12,8 +11,8 @@
 #define FILTER_TAP_NUM 100
 #define HPFILTER_TAP_NUM 101*/
 
-int32_t BWHPF(int32_t input);
-int32_t BWLPF(int32_t input);
+double BWHPF(double input);
+double BWLPF(double input);
 
 /*void FIRF_Init(void);
 float FIRF_Process(float input);

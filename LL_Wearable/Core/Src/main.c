@@ -52,22 +52,22 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-int32_t emg_raw = 0;
-int32_t filtered_emg_raw =0;
-int32_t emg_rec = 0;
-int32_t filtered_emg = 0;
-int32_t gma1 = -0.75;
-int32_t gma2 = -0.125;
-int32_t bet1;
-int32_t bet2;
-int32_t alp;
-int32_t k;
-int32_t d = 0.04;
-int32_t A = -1;
-int32_t na = 0;
-int32_t na_t1 = 0;
-int32_t na_t2 = 0;
-int32_t ma;
+double emg_raw = 0;
+double filtered_emg_raw =0;
+double emg_rec = 0;
+double filtered_emg = 0;
+double gma1 = -0.75;
+double gma2 = -0.125;
+double bet1;
+double bet2;
+double alp;
+double k;
+double d = 0.04;
+double A = -0.02;
+double na = 0;
+double na_t1 = 0;
+double na_t2 = 0;
+double ma;
 //KMF kf; // KMF 구조�??? ?��?��?��?�� ?��?��
 /* USER CODE END PV */
 
@@ -369,7 +369,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  {
 	  emg_raw = HAL_ADC_GetValue(&hadc1);
 	  filtered_emg_raw =BWHPF(emg_raw);
-	  emg_rec = abs(filtered_emg_raw);
+	  emg_rec = fabs(filtered_emg_raw);
 	  filtered_emg = BWLPF(emg_rec);
 
 	  na_t2 = na_t1;
@@ -386,9 +386,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  //printf("%f", filtered_emg);
 	  //printf(",");
 	  //printf("%f\r\n", lpf_filtered_emg);
-	  //printf("%f", na);
-	  //printf(",");
-	  //printf("%.2f\r\n", ma);
+	  printf("%.2f", na);
+	  printf(",");
+	  printf("%.2f\r\n", ma);
 	  }
 }
 /* USER CODE END 4 */

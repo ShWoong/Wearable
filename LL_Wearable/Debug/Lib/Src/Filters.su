@@ -1,2 +1,2 @@
-../Lib/Src/Filters.c:42:9:BWHPF	32	static
-../Lib/Src/Filters.c:58:9:BWLPF	32	static
+../Lib/Src/Filters.c:42:8:BWHPF	48	static
+../Lib/Src/Filters.c:58:8:BWLPF	48	static
