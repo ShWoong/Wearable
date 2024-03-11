@@ -68,7 +68,7 @@ int32_t na = 0;
 int32_t na_t1 = 0;
 int32_t na_t2 = 0;
 int32_t ma;
-KMF kf; // KMF 구조�??? ?��?��?��?�� ?��?��
+//KMF kf; // KMF 구조�??? ?��?��?��?�� ?��?��
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,9 +86,9 @@ int _write(int file, char* p, int len){
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-	float alpha = 0.5; // ?��?��?�� ?��?��
+	/*float alpha = 0.5; // ?��?��?�� ?��?��
 	float ewma_value = 0; // 초기 EWMA 값�? 0?���??? ?��?�� (?��?�� �??? 번째 ?��?? 값으�??? 초기?��)
-	float new_measurement;
+	float new_measurement;*/
 /* USER CODE END 0 */
 
 /**
@@ -109,7 +109,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  KMF_Init(&kf, 0.0, 1.0, 0.1); // kf ?��?��?��?�� 초기?��
+  //KMF_Init(&kf, 0.0, 1.0, 0.1); // kf ?��?��?��?�� 초기?��
   //HighPassFilter_Init;
   /* USER CODE END Init */
 
@@ -389,9 +389,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  //printf("%f", filtered_emg);
 	  //printf(",");
 	  //printf("%f\r\n", lpf_filtered_emg);
-	  printf("%f", na);
-	  printf(",");
-	  printf("%.2f\r\n", ma);
+	  //printf("%f", na);
+	  //printf(",");
+	  //printf("%.2f\r\n", ma);
 	  }
 }
 /* USER CODE END 4 */

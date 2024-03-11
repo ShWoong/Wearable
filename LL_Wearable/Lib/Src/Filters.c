@@ -40,7 +40,7 @@ int32_t lpf_sos[SECTIONS][6] = {
 };
 
 int32_t BWHPF(int32_t input) {
-	int32_t output = 0.0;
+	int32_t output = 0;
     for (int i = 0; i < SECTIONS; i++) {
     	int32_t xn = (i == 0) ? input : output;
 
@@ -56,7 +56,7 @@ int32_t BWHPF(int32_t input) {
 }
 
 int32_t BWLPF(int32_t input) {
-	int32_t output = 0.0;
+	int32_t output = 0;
     for (int i = 0; i < SECTIONS; i++) {
     	int32_t xn = (i == 0) ? input : output;
 
@@ -71,46 +71,7 @@ int32_t BWLPF(int32_t input) {
     return output;
 }
 
-
-#define LPF_SECTION_COUNT 1  // 2차 필터는 단일 섹션으로 구성됩니다.
-
-// 필터 계수 정의
-const int32_t lpf_coefficients[LPF_SECTION_COUNT][6] = {
-    {8.76555488e-05, 1.75311098e-04, 8.76555488e-05, 1.0, -1.97334425, 0.973694872}
-};
-
-// 입력 및 출력 버퍼 정의
-int32_t lpf_input_buffer[LPF_SECTION_COUNT][2] = {0};
-int32_t lpf_output_buffer[LPF_SECTION_COUNT][2] = {0};
-
-float applyLowPassFilter(float input) {
-    float output = input;
-
-    for (int i = 0; i < LPF_SECTION_COUNT; i++) {
-        float b0 = lpf_coefficients[i][0];
-        float b1 = lpf_coefficients[i][1];
-        float b2 = lpf_coefficients[i][2];
-        float a1 = lpf_coefficients[i][4];
-        float a2 = lpf_coefficients[i][5];
-
-        // 현재 섹션의 출력 계산
-        output = b0 * input + b1 * lpf_input_buffer[i][0] + b2 * lpf_input_buffer[i][1]
-                 - a1 * lpf_output_buffer[i][0] - a2 * lpf_output_buffer[i][1];
-
-        // 버퍼 업데이트
-        lpf_input_buffer[i][1] = lpf_input_buffer[i][0];
-        lpf_input_buffer[i][0] = input;
-        lpf_output_buffer[i][1] = lpf_output_buffer[i][0];
-        lpf_output_buffer[i][0] = output;
-
-        // 다음 섹션의 입력은 현재 섹션의 출력
-        input = output;
-    }
-
-    return output;
-}
-
-static float firFilterCoeffs[FILTER_TAP_NUM] = {
+/*static float firFilterCoeffs[FILTER_TAP_NUM] = {
     // 여기에 계산된 계수 넣기
     0.00149401, 0.00151131, 0.00156314, 0.00164928, 0.00176939,
     0.00192298, 0.00210944, 0.00232802, 0.00257783, 0.00285788,
@@ -245,4 +206,4 @@ void KMF_Update(KMF *kf, float measurement) {
     kf->kalman_gain = kf->error_estimate / (kf->error_estimate + kf->error_measure);
     kf->estimate = kf->estimate + kf->kalman_gain * (measurement - kf->estimate);
     kf->error_estimate = (1 - kf->kalman_gain) * kf->error_estimate;
-}
+}*/
