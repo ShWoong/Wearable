@@ -1,6 +1,11 @@
 
 #include "Filters.h"
 
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <math.h>
+
 /************************************************BUTTERWORTH HIGH PASS FILTER*************************************************/
 float hpf_x_buffer[SECTIONS][2] = {0};
 float hpf_y_buffer[SECTIONS][2] = {0};
@@ -238,4 +243,24 @@ float MUSCLE_ACTIVATION(float neural_activation){
 	float ma = (exp(A*neural_activation) - 1)/(exp(A) - 1);
 
 	return ma;
+}
+
+/******************************************************TORQUE GENERATION******************************************************/
+float TORQUE_GENERATION(float muscle_activation, muscle_fiber_length, muscle_contraction_velocity){
+	float q0 = -2.06, q1 = 6.16, q2 = -3.13, pa = 13.9*pi/180, lt = 34.6, lm0 = 7.6, Fm0 = 848.8, fA;
+	float lm = lm0*0.5, l = lm/lm0, v = vm/vm0, lmt = lt + lm*cosd(pa);
+
+	if(l>=0.5 || l<=1.5){
+		fA = q0 + q1*l + q2*l^2;
+	}
+	else{
+		fA = 0;
+	}
+	float fP = exp(10*l-15);
+	float fV = 1;
+
+	float FmA = fA*fV*muscle_activation*Fm0;
+	float FmP = fP*Fm0;
+	float Fmt = (FmA + FmP)*cos(pa);
+
 }

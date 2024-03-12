@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <math.h>
 #include "Filters.h"
 /* USER CODE END Includes */
@@ -52,26 +51,6 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-/*******************************************************DATA COLLECTION*******************************************************/
-
-/******************************************CONSTANT AND VARIABLE OF TORQUE FUNCTION*******************************************/
-float FA;
-float FP;
-float fa;
-float fp;
-float fv;
-float vm;
-float vm0;
-float vm;
-float l;
-float lm;
-float lm0;
-float fmt;
-float q0;
-float q1;
-float q2;
-float lt;
-
 //KMF kf; // KMF 구조�??? ?��?��?��?�� ?��?��
 /* USER CODE END PV */
 

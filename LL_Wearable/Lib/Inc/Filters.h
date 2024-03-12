@@ -15,6 +15,7 @@ float BWHPF(float input);
 float BWLPF(float input);
 float NEURAL_ACTIVATION(float emg);
 float MUSCLE_ACTIVATION(float neural_activation);
+float TORQUE_GENERATION(float muscle_activation, muscle_fiber_length, muscle_contraction_velocity);
 /*void FIRF_Init(void);
 float FIRF_Process(float input);
 float MAF(float new_sample);
