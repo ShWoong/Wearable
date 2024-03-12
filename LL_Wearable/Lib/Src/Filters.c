@@ -1,13 +1,12 @@
 
 #include "Filters.h"
 
-double hpf_x_buffer[SECTIONS][2] = {0};
-double hpf_y_buffer[SECTIONS][2] = {0};
-double lpf_x_buffer[SECTIONS][2] = {0};
-double lpf_y_buffer[SECTIONS][2] = {0};
+/************************************************BUTTERWORTH HIGH PASS FILTER*************************************************/
+float hpf_x_buffer[SECTIONS][2] = {0};
+float hpf_y_buffer[SECTIONS][2] = {0};
 
 
-double hpf_sos[SECTIONS][6] = {
+float hpf_sos[SECTIONS][6] = {
     {0.78136727, -1.56273453,  0.78136727, 1.0, -1.67466095, 0.70485868},
     {1.0, -2.0,  1.0, 1.0, -1.83312526, 0.86618045} //30Hz
 	/*{0.8484753, -1.69695059, 0.8484753, 1.0, -1.77831349, 0.79244747},
@@ -18,7 +17,27 @@ double hpf_sos[SECTIONS][6] = {
 	{1.0, -2.0, 1.0, 1.0, -1.99516324, 0.99520262}*/ //1Hz
 };
 
-double lpf_sos[SECTIONS][6] = {
+float BWHPF(float input) {
+	float output = 0;
+    for (int i = 0; i < SECTIONS; i++) {
+    	float xn = (i == 0) ? input : output;
+
+        output = hpf_sos[i][0] * xn + hpf_sos[i][1] * hpf_x_buffer[i][0] + hpf_sos[i][2] * hpf_x_buffer[i][1]
+                 - hpf_sos[i][4] * hpf_y_buffer[i][0] - hpf_sos[i][5] * hpf_y_buffer[i][1];
+
+        hpf_x_buffer[i][1] = hpf_x_buffer[i][0];
+        hpf_x_buffer[i][0] = xn;
+        hpf_y_buffer[i][1] = hpf_y_buffer[i][0];
+        hpf_y_buffer[i][0] = output;
+    }
+    return output;
+}
+
+/*************************************************BUTTERWORTH LOW PASS FILTER*************************************************/
+float lpf_x_buffer[SECTIONS][2] = {0};
+float lpf_y_buffer[SECTIONS][2] = {0};
+
+float lpf_sos[SECTIONS][6] = {
 	/*{0.06290094, 0.12580189, 0.06290094, 1.0, -0.1964664, 0.0484845},
 	{1.0, 2.0, 1.0, 1.0, -0.27237536, 0.45358867}*/ //220Hz
     /*{1.20231162e-07, 2.40462324e-07, 1.20231162e-07, 1.0, -1.93132782, 0.932701053},
@@ -39,26 +58,10 @@ double lpf_sos[SECTIONS][6] = {
 	{1.0, 2.0, 1.0, 1.0, -1.99951883, 0.99951922}*/ //0.1Hz
 };
 
-double BWHPF(double input) {
-	double output = 0;
+float BWLPF(float input) {
+	float output = 0;
     for (int i = 0; i < SECTIONS; i++) {
-    	double xn = (i == 0) ? input : output;
-
-        output = hpf_sos[i][0] * xn + hpf_sos[i][1] * hpf_x_buffer[i][0] + hpf_sos[i][2] * hpf_x_buffer[i][1]
-                 - hpf_sos[i][4] * hpf_y_buffer[i][0] - hpf_sos[i][5] * hpf_y_buffer[i][1];
-
-        hpf_x_buffer[i][1] = hpf_x_buffer[i][0];
-        hpf_x_buffer[i][0] = xn;
-        hpf_y_buffer[i][1] = hpf_y_buffer[i][0];
-        hpf_y_buffer[i][0] = output;
-    }
-    return output;
-}
-
-double BWLPF(double input) {
-	double output = 0;
-    for (int i = 0; i < SECTIONS; i++) {
-    	double xn = (i == 0) ? input : output;
+    	float xn = (i == 0) ? input : output;
 
         output = lpf_sos[i][0] * xn + lpf_sos[i][1] * lpf_x_buffer[i][0] + lpf_sos[i][2] * lpf_x_buffer[i][1]
                  - lpf_sos[i][4] * lpf_y_buffer[i][0] - lpf_sos[i][5] * lpf_y_buffer[i][1];
@@ -71,6 +74,7 @@ double BWLPF(double input) {
     return output;
 }
 
+/*******************************************FINITE IMPULSE RESPONSE LOW PASS FILTER*******************************************/
 /*static float firFilterCoeffs[FILTER_TAP_NUM] = {
     // 여기에 계산된 계수 넣기
     0.00149401, 0.00151131, 0.00156314, 0.00164928, 0.00176939,
@@ -123,7 +127,8 @@ float FIRF_Process(float input) {
     return output;
 }
 
-static float highPassFilterCoeffs[FILTER_TAP_NUM] = {
+/*******************************************FINITE IMPULSE RESPONSE HIGH PASS FILTER******************************************/
+/*static float highPassFilterCoeffs[FILTER_TAP_NUM] = {
     -3.19998918e-06, -3.23629810e-06, -3.34507992e-06, -3.52590537e-06, -3.77806088e-06,
     -4.10055137e-06, -4.49210415e-06, -4.95117398e-06, -5.47594919e-06, -6.06435875e-06,
     -6.71408052e-06, -7.42255037e-06, -8.18697234e-06, -9.00432962e-06, -9.87139651e-06,
@@ -170,9 +175,10 @@ float HighPassFilter_Process(float input) {
     }
 
     return output;
-}
+}*/
 
-float MAF(float new_sample) {
+/****************************************************MOVING AVERAGE FILTER****************************************************/
+/*float MAF(float new_sample) {
     static float samples[SAMPLE_SIZE] = {0};
     static int index = 0;
     static float sum = 0;
@@ -192,7 +198,8 @@ float MAF(float new_sample) {
     return average;
 }
 
-float EWMAF(float new_measurement, float prev_ewma, float alpha) {
+/*****************************************EXPONENTIAL WEIGHTED MOVING AVERAGE FILTER******************************************/
+/*float EWMAF(float new_measurement, float prev_ewma, float alpha) {
     return alpha * new_measurement + (1 - alpha) * prev_ewma;
 }
 
@@ -207,3 +214,28 @@ void KMF_Update(KMF *kf, float measurement) {
     kf->estimate = kf->estimate + kf->kalman_gain * (measurement - kf->estimate);
     kf->error_estimate = (1 - kf->kalman_gain) * kf->error_estimate;
 }*/
+
+/************************************************NEURAL ACTIVATION CALCULATION************************************************/
+float na = 0, nat1 = 0, nat2 = 0;
+
+float NEURAL_ACTIVATION(float emg){
+	float gma1 = -0.75, gma2 = -0.125;
+	float bet1 = gma1 + gma2, bet2 = gma1*gma2, alp = 1 + bet1 + bet2;
+
+	nat2 = nat1;
+	nat1 = na;
+	na = (alp*emg - bet1*nat1 - bet2*nat2)-4;
+	if(na<0){
+	  na=0;
+	}
+
+	return na;
+}
+
+/************************************************MUSCLE ACTIVATION CALCULATION************************************************/
+float MUSCLE_ACTIVATION(float neural_activation){
+	float A = -0.08;
+	float ma = (exp(A*neural_activation) - 1)/(exp(A) - 1);
+
+	return ma;
+}

@@ -1,2 +1,4 @@
-../Lib/Src/Filters.c:42:8:BWHPF	3
-../Lib/Src/Filters.c:58:8:BWLPF	3
+../Lib/Src/Filters.c:20:7:BWHPF	3
+../Lib/Src/Filters.c:61:7:BWLPF	3
+../Lib/Src/Filters.c:221:7:NEURAL_ACTIVATION	2
+../Lib/Src/Filters.c:236:7:MUSCLE_ACTIVATION	1

@@ -52,22 +52,26 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-double emg_raw = 0;
-double filtered_emg_raw =0;
-double emg_rec = 0;
-double filtered_emg = 0;
-double gma1 = -0.75;
-double gma2 = -0.125;
-double bet1;
-double bet2;
-double alp;
-double k;
-double d = 0.04;
-double A = -0.02;
-double na = 0;
-double na_t1 = 0;
-double na_t2 = 0;
-double ma;
+/*******************************************************DATA COLLECTION*******************************************************/
+
+/******************************************CONSTANT AND VARIABLE OF TORQUE FUNCTION*******************************************/
+float FA;
+float FP;
+float fa;
+float fp;
+float fv;
+float vm;
+float vm0;
+float vm;
+float l;
+float lm;
+float lm0;
+float fmt;
+float q0;
+float q1;
+float q2;
+float lt;
+
 //KMF kf; // KMF 구조�??? ?��?��?��?�� ?��?��
 /* USER CODE END PV */
 
@@ -98,9 +102,7 @@ int _write(int file, char* p, int len){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	bet1 = gma1 + gma2;
-	bet2 = gma1*gma2;
-	alp = 1 + bet1 + bet2;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -367,15 +369,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance==TIM3)
 	  {
-	  emg_raw = HAL_ADC_GetValue(&hadc1);
-	  filtered_emg_raw =BWHPF(emg_raw);
-	  emg_rec = fabs(filtered_emg_raw);
-	  filtered_emg = BWLPF(emg_rec);
+	  float emg_raw = HAL_ADC_GetValue(&hadc1);
+	  float filtered_emg_raw =BWHPF(emg_raw);
+	  float emg_rec = fabs(filtered_emg_raw);
+	  float filtered_emg = BWLPF(emg_rec);
 
-	  na_t2 = na_t1;
-	  na_t1 = na;
-	  na = alp*filtered_emg - bet1*na_t1 - bet2*na_t2;
-	  ma = (exp(A*na) - 1)/(exp(A) - 1);
+	  float neural_activation = NEURAL_ACTIVATION(filtered_emg);
+	  float muscle_activation = MUSCLE_ACTIVATION(neural_activation);
 	  //printf(",");
 	  //printf("%f", emg_rec);
 	  //printf(",");
@@ -386,9 +386,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  //printf("%f", filtered_emg);
 	  //printf(",");
 	  //printf("%f\r\n", lpf_filtered_emg);
-	  printf("%.2f", na);
+	  printf("%f", neural_activation);
 	  printf(",");
-	  printf("%.2f\r\n", ma);
+	  printf("%.2lf\r\n", muscle_activation);
 	  }
 }
 /* USER CODE END 4 */

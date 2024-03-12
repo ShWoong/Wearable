@@ -11,9 +11,10 @@
 #define FILTER_TAP_NUM 100
 #define HPFILTER_TAP_NUM 101*/
 
-double BWHPF(double input);
-double BWLPF(double input);
-
+float BWHPF(float input);
+float BWLPF(float input);
+float NEURAL_ACTIVATION(float emg);
+float MUSCLE_ACTIVATION(float neural_activation);
 /*void FIRF_Init(void);
 float FIRF_Process(float input);
 float MAF(float new_sample);
