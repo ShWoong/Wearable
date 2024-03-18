@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+#include <inttypes.h>
 #include "Filters.h"
 /* USER CODE END Includes */
 
@@ -51,7 +52,7 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-//KMF kf; // KMF 구조�??? ?��?��?��?�� ?��?��
+//KMF kf; // KMF 구조�????????????? ?��?��?��?�� ?��?��
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,7 +71,7 @@ int _write(int file, char* p, int len){
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 	/*float alpha = 0.5; // ?��?��?�� ?��?��
-	float ewma_value = 0; // 초기 EWMA 값�? 0?���??? ?��?�� (?��?�� �??? 번째 ?��?? 값으�??? 초기?��)
+	float ewma_value = 0; // 초기 EWMA 값�? 0?���????????????? ?��?�� (?��?�� �????????????? 번째 ?��?? 값으�????????????? 초기?��)
 	float new_measurement;*/
 /* USER CODE END 0 */
 
@@ -109,6 +110,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_ADC_Start(&hadc1);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -199,13 +201,13 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.NbrOfConversion = 2;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -218,6 +220,15 @@ static void MX_ADC1_Init(void)
   sConfig.Channel = ADC_CHANNEL_13;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_12;
+  sConfig.Rank = 2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -242,14 +253,15 @@ static void MX_TIM3_Init(void)
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM3_Init 1 */
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 899;
+  htim3.Init.Prescaler = 900;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 99;
+  htim3.Init.Period = 100;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -261,15 +273,28 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_ENABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
 
 }
 
@@ -326,6 +351,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -339,6 +367,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PC4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -348,27 +383,48 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance==TIM3)
 	  {
-	  float emg_raw = HAL_ADC_GetValue(&hadc1);
-	  float filtered_emg_raw =BWHPF(emg_raw);
-	  float emg_rec = fabs(filtered_emg_raw);
-	  float filtered_emg = BWLPF(emg_rec);
+		float emg_raw;
 
-	  float neural_activation = NEURAL_ACTIVATION(filtered_emg);
-	  float muscle_activation = MUSCLE_ACTIVATION(neural_activation);
-	  //printf(",");
-	  //printf("%f", emg_rec);
-	  //printf(",");
-	  //printf("%f", filtered_emg_raw);
-	  //printf(",");
-	  //printf("%f", emg_rec);
-	  //printf(",");
-	  //printf("%f", filtered_emg);
-	  //printf(",");
-	  //printf("%f\r\n", lpf_filtered_emg);
-	  printf("%f", neural_activation);
-	  printf(",");
-	  printf("%.2lf\r\n", muscle_activation);
-	  }
+		ADC_ChannelConfTypeDef sConfig = {0};
+		/*sConfig.Channel = ADC_CHANNEL_13;
+		HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+		HAL_ADC_Start(&hadc1);
+		if(HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK){
+			emg_raw = HAL_ADC_GetValue(&hadc1);
+		}
+		HAL_ADC_Stop(&hadc1);*/
+
+		const float C_stray = 7, adc_max = 4096;
+		float adc;
+
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+		sConfig.Channel = ADC_CHANNEL_12;
+		HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+		HAL_ADC_Start(&hadc1);
+		if(HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK){
+			adc = HAL_ADC_GetValue(&hadc1);
+		}
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+		float C = adc*C_stray/(adc_max-adc);
+		float C_filtered = BWLPF(C);
+
+		/*float filtered_emg_raw =BWHPF(emg_raw);
+		float emg_rec = fabs(filtered_emg_raw);
+		float filtered_emg = BWLPF(emg_rec);
+
+		float neural_activation = NEURAL_ACTIVATION(filtered_emg);
+		float muscle_activation = MUSCLE_ACTIVATION(neural_activation);
+
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, muscle_activation);*/
+		//float l_knee_F = FORCE_GENERATION(muscle_activation, );
+		//printf("%f", neural_activation);
+		//printf(",");
+		//printf("%"PRId32 "\r\n", (int32_t) muscle_activation);
+		//printf("%f\r\n", muscle_activation);
+		printf("%f\r\n", C);
+		//printf(",");
+		//printf("%f\r\n", C_filtered);
+	}
 }
 /* USER CODE END 4 */
 

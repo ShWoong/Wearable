@@ -1,10 +1,12 @@
 
 #include "Filters.h"
 
+#include <main.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+#include <inttypes.h>
 
 /************************************************BUTTERWORTH HIGH PASS FILTER*************************************************/
 float hpf_x_buffer[SECTIONS][2] = {0};
@@ -239,19 +241,20 @@ float NEURAL_ACTIVATION(float emg){
 
 /************************************************MUSCLE ACTIVATION CALCULATION************************************************/
 float MUSCLE_ACTIVATION(float neural_activation){
-	float A = -0.08;
+	float A = -0.03, max_value = 33.81404;
 	float ma = (exp(A*neural_activation) - 1)/(exp(A) - 1);
+	float ma_cal = ma/max_value*100;
 
-	return ma;
+	return (int32_t)round(ma_cal);
 }
 
 /******************************************************TORQUE GENERATION******************************************************/
-float TORQUE_GENERATION(float muscle_activation, muscle_fiber_length, muscle_contraction_velocity){
-	float q0 = -2.06, q1 = 6.16, q2 = -3.13, pa = 13.9*pi/180, lt = 34.6, lm0 = 7.6, Fm0 = 848.8, fA;
-	float lm = lm0*0.5, l = lm/lm0, v = vm/vm0, lmt = lt + lm*cosd(pa);
+float FORCE_GENERATION(float muscle_activation, float muscle_fiber_length, float muscle_contraction_velocity){
+	float q0 = -2.06, q1 = 6.16, q2 = -3.13, pa = 13.9*M_PI/180, lt = 34.6, lm0 = 7.6, Fm0 = 848.8, fA;
+	float lm = lm0*0.5, l = lm/lm0, lmt = lt + lm*cosd(pa);
 
 	if(l>=0.5 || l<=1.5){
-		fA = q0 + q1*l + q2*l^2;
+		fA = q0 + q1*l + q2*powf(l, 2);
 	}
 	else{
 		fA = 0;
@@ -263,4 +266,24 @@ float TORQUE_GENERATION(float muscle_activation, muscle_fiber_length, muscle_con
 	float FmP = fP*Fm0;
 	float Fmt = (FmA + FmP)*cos(pa);
 
+	return Fmt;
 }
+
+/***********************************************STRETCH SENSOR CAP CALCULATION************************************************/
+/*float STRETCH_SENSOR(void){
+	const float C_stray = 7, adc_max = 4096;
+	float adc;
+
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+	sConfig.Channel = ADC_CHANNEL_12;
+	HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+	HAL_ADC_Start(&hadc1);
+	if(HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK){
+		adc = HAL_ADC_GetValue(&hadc1);
+	}
+
+	float C = adc*C_stray/(adc_max-adc);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+
+	return C;
+}*/
