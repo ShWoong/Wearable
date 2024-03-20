@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "Filters.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <inttypes.h>
-#include "Filters.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +45,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 TIM_HandleTypeDef htim3;
 
@@ -53,13 +53,16 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t tim3flag1 = 0;
-uint32_t adcval[2] = {0};
-float emg_raw = 0, emg_rec = 0, filtered_emg = 0, adc = 0, neural_activation = 0, muscle_activation = 0, C = 0, C_filtered = 0;
+volatile uint8_t adcFlag = 0;
+uint32_t adcval[2];
+uint32_t emg_raw = 0, stretch_raw = 0;
+float  emg_rec = 0, filtered_emg = 0, neural_activation = 0, muscle_activation = 0, C = 0, C_filtered = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
@@ -104,12 +107,13 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
-  HAL_ADC_Start(&hadc1);
+  HAL_ADC_Start_DMA(&hadc1, adcval, 2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
@@ -117,9 +121,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(tim3flag1 == 1){
-			emg_raw;
-			ADC_ChannelConfTypeDef sConfig = {0};
+	  if(adcFlag == 1){
+		  	adcFlag = 0;
+		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+		  	emg_raw = adcval[0];
+		  	stretch_raw = adcval[1];
+			/*ADC_ChannelConfTypeDef sConfig = {0};
 			sConfig.Channel = ADC_CHANNEL_13;
 			HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 			sConfig.Rank = 1;
@@ -142,7 +149,7 @@ int main(void)
 			}
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
 			float C = adc*C_stray/(adc_max-adc);
-			float C_filtered = BWLPF(C);
+			float C_filtered = BWLPF(C);*/
 
 			/*float filtered_emg_raw =BWHPF(emg_raw);
 			float emg_rec = fabs(filtered_emg_raw);
@@ -157,9 +164,13 @@ int main(void)
 			//printf(",");
 			//printf("%"PRId32 "\r\n", (int32_t) muscle_activation);
 			//printf("%f\r\n", muscle_activation);
-			printf("%f\r\n", C);
+			//printf("%f\r\n", C);
 			//printf(",");
 			//printf("%f\r\n", C_filtered);
+		  	printf("%"PRIu32"\r\n", stretch_raw);
+		  	//printf(",");
+		  	//printf("%"PRIu32"\r\n", emg_raw);
+		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
 	  }
     /* USER CODE END WHILE */
 
@@ -248,12 +259,12 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 2;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -322,7 +333,7 @@ static void MX_TIM3_Init(void)
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_ENABLE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
@@ -376,6 +387,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -423,11 +450,20 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
+/*void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance==TIM3){
+		HAL_ADC_Start(&hadc1);
+		adcval[0] = HAL_ADC_GetValue(&hadc1);
+		HAL_ADC_Start(&hadc1);
+		adcval[1] = HAL_ADC_GetValue(&hadc1);
 		tim3flag1 = 1;
 	}
+}*/
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+	if(hadc->Instance == ADC1)
+	    {
+		adcFlag = 1;
+	    }
 }
 /* USER CODE END 4 */
 
