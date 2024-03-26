@@ -12,29 +12,29 @@
 /************************************************BUTTERWORTH HIGH PASS FILTER*************************************************/
 	float hpf_x_buffer[SECTIONS][2] = {0};
 	float hpf_y_buffer[SECTIONS][2] = {0};
-float BWHPF(float input) {
+float BWHPF(float input, int8_t Hz) {
 	float output = 0;
 
-	//float hpf_sos[SECTIONS][6];
+	float hpf_sos[SECTIONS][6];
 
-	/*float hpf_sos_50[SECTIONS][6] = {
+	float hpf_sos_50[SECTIONS][6] = {
 			{0.8484753, -1.69695059,  0.8686753, 1.0, -1.77831349, 0.79244747},
 			{1.0, -2.0,  1.0, 1.0, -1.8934156, 0.90846441}
 	};
 	float hpf_sos_30[SECTIONS][6] = {
 			{0.78136727, -1.56273453,  0.78136727, 1.0, -1.67466095, 0.70485868},
 			{1.0, -2.0,  1.0, 1.0, -1.83312526, 0.86618045}
-	};*/
-	float hpf_sos[SECTIONS][6] = {
+	};
+	float hpf_sos_20[SECTIONS][6] = {
 			{0.8484753, -1.69695059, 0.8484753, 1.0, -1.77831349, 0.79244747},
 			{1.0, -2.0, 1.0, 1.0, -1.8934156, 0.90846441}
 	};
-	/*float hpf_sos_15[SECTIONS][6] = {
+	float hpf_sos_15[SECTIONS][6] = {
 			{0.88409204, -1.76818409, 0.88409204, 1.0, -1.83185386, 0.84001994},
 			{1.0, -2.0, 1.0, 1.0, -1.92190889, 0.93047642}
-	};*/
+	};
 
-	/*if (Hz == 50){
+	if (Hz == 50){
 	        memcpy(hpf_sos, hpf_sos_50, sizeof(hpf_sos_50));
 	    }
 	else if (Hz == 30){
@@ -45,7 +45,7 @@ float BWHPF(float input) {
 	    }
 	else if (Hz == 15){
 	        memcpy(hpf_sos, hpf_sos_15, sizeof(hpf_sos_15));
-	    }*/
+	    }
 
 
     for (int i = 0; i < SECTIONS; i++) {

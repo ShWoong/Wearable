@@ -143,7 +143,7 @@ int main(void)
 
 		  	C = (float)stretch_raw*IN_STRAY_CAP_TO_GND / (float)(MAX_ADC_VALUE - stretch_raw);
 
-			float filtered_emg_raw =BWHPF((float)emg_raw);
+			float filtered_emg_raw =BWHPF((float)emg_raw, 20);
 			float emg_rec = fabs(filtered_emg_raw);
 			float filtered_emg = BWLPF(emg_rec);
 
@@ -152,19 +152,19 @@ int main(void)
 
 			__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, muscle_activation);
 
-			//float stretch_hpf = BWHPF((float) stretch_raw, 50);
+			float stretch_hpf = BWHPF((float) stretch_raw, 50);
 			//float l_knee_F = FORCE_GENERATION(muscle_activation, );
 			//printf("%f", neural_activation);
-			printf("%"PRIu32, emg_raw);
-			printf(",");
-			printf("%f\r\n", filtered_emg_raw);
+			//printf("%"PRIu32, emg_raw);
+			//printf(",");
+			printf("%f", filtered_emg_raw);
 			//printf("%f\r\n", muscle_activation);
 			//printf("%f\r\n", C);
 			//printf(",");
 			//printf("%f\r\n", C_filtered);
 		  	//printf("%"PRIu32, emg_raw);
-		  	//printf(",");
-		  	//printf("%f\r\n", stretch_hpf);
+		  	printf(",");
+		  	printf("%f\r\n", stretch_hpf);
 		  	//printf("%f\r\n", C);
 		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
 

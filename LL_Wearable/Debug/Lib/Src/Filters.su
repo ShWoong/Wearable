@@ -1,5 +1,5 @@
-../Lib/Src/Filters.c:27:7:BWHPF	32	static
-../Lib/Src/Filters.c:68:7:BWLPF	32	static
-../Lib/Src/Filters.c:228:7:NEURAL_ACTIVATION	40	static
-../Lib/Src/Filters.c:243:7:MUSCLE_ACTIVATION	40	static
-../Lib/Src/Filters.c:252:7:FORCE_GENERATION	104	static
+../Lib/Src/Filters.c:15:7:BWHPF	280	static
+../Lib/Src/Filters.c:90:7:BWLPF	32	static
+../Lib/Src/Filters.c:250:7:NEURAL_ACTIVATION	40	static
+../Lib/Src/Filters.c:265:7:MUSCLE_ACTIVATION	40	static
+../Lib/Src/Filters.c:274:7:FORCE_GENERATION	104	static
