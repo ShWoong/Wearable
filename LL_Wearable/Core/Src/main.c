@@ -56,12 +56,12 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t Tim3Flag = 0;
-volatile uint8_t adcFlag = 0;
+volatile uint8_t adcFlag1 = 0;
 volatile uint8_t adcFlag2 = 0;
 const float IN_STRAY_CAP_TO_GND = 7;
 const int MAX_ADC_VALUE = 4095;
 uint32_t adcval1[1];
-uint32_t adcval2;
+uint32_t adcval2[1];
 uint32_t emg_raw = 0, stretch_raw = 0;
 float  emg_rec = 0, filtered_emg = 0, neural_activation = 0, muscle_activation = 0, C = 0, C_filtered = 0;
 /* USER CODE END PV */
@@ -123,6 +123,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_ADC_Start_DMA(&hadc1, adcval1, 1);
+  HAL_ADC_Start_DMA(&hadc2, adcval2, 1);
   //HAL_ADC_Start_DMA(&hadc2, adcval2, 1);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* USER CODE END 2 */
@@ -131,26 +132,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(adcFlag == 1){
-		  adcFlag = 0;
-		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
-		  	HAL_Delay(1);
-		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
-		  	HAL_ADC_Start(&hadc2);
-		  	while(adcFlag2 == 1){}
-		  	adcFlag2 = 0;
-		  	adcval2 = HAL_ADC_GetValue(&hadc2);
+	  if(adcFlag1 == 1 && adcFlag2 == 1){
+		  adcFlag1 = 0;
+		  adcFlag2 = 0;
 
-		  	stretch_raw = adcval2;
+		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+
 		  	emg_raw = adcval1[0];
+		  	stretch_raw = adcval2[0];
+
 		  	C = (float)stretch_raw*IN_STRAY_CAP_TO_GND / (float)(MAX_ADC_VALUE - stretch_raw);
 
-			/*
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
-			float C = adc*C_stray/(adc_max-adc);
-			float C_filtered = BWLPF(C);*/
-
-			float filtered_emg_raw =BWHPF(emg_raw);
+			float filtered_emg_raw =BWHPF((float)emg_raw);
 			float emg_rec = fabs(filtered_emg_raw);
 			float filtered_emg = BWLPF(emg_rec);
 
@@ -158,18 +151,22 @@ int main(void)
 			float muscle_activation = MUSCLE_ACTIVATION(neural_activation);
 
 			__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, muscle_activation);
+
+			//float stretch_hpf = BWHPF((float) stretch_raw, 50);
 			//float l_knee_F = FORCE_GENERATION(muscle_activation, );
 			//printf("%f", neural_activation);
-			//printf(",");
-			printf("%f", filtered_emg);
+			printf("%"PRIu32, emg_raw);
+			printf(",");
+			printf("%f\r\n", filtered_emg_raw);
 			//printf("%f\r\n", muscle_activation);
 			//printf("%f\r\n", C);
 			//printf(",");
 			//printf("%f\r\n", C_filtered);
 		  	//printf("%"PRIu32, emg_raw);
-		  	printf(",");
-		  	printf("%f\r\n", C);
-
+		  	//printf(",");
+		  	//printf("%f\r\n", stretch_hpf);
+		  	//printf("%f\r\n", C);
+		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
 
 	  }
     /* USER CODE END WHILE */
@@ -274,7 +271,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_13;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -311,8 +308,8 @@ static void MX_ADC2_Init(void)
   hadc2.Init.ScanConvMode = ENABLE;
   hadc2.Init.ContinuousConvMode = DISABLE;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
-  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  hadc2.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO;
   hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc2.Init.NbrOfConversion = 1;
   hadc2.Init.DMAContinuousRequests = ENABLE;
@@ -326,7 +323,7 @@ static void MX_ADC2_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_12;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -359,7 +356,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 900;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 1000;
+  htim3.Init.Period = 100;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -412,7 +409,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 921600;
+  huart2.Init.BaudRate = 230400;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -502,12 +499,10 @@ static void MX_GPIO_Init(void)
 	}
 }*/
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
-	if(hadc->Instance == ADC1)
-	    {
-		adcFlag = 1;
+	if(hadc->Instance == ADC1){
+		adcFlag1 = 1;
 	    }
-	else if(hadc->Instance == ADC2)
-		{
+	else if (hadc->Instance == ADC2){
 		adcFlag2 = 1;
 		}
 }
