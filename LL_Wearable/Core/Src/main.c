@@ -58,8 +58,10 @@ UART_HandleTypeDef huart2;
 volatile uint8_t Tim3Flag = 0;
 volatile uint8_t adcFlag1 = 0;
 volatile uint8_t adcFlag2 = 0;
-const float IN_STRAY_CAP_TO_GND = 7;
-const int MAX_ADC_VALUE = 4095;
+const float stray_cap = 7;
+const float adc_val_max = 4095;
+float t_sat = 0.035;
+float res = 0.00095;
 uint32_t adcval1[1];
 uint32_t adcval2[1];
 uint32_t emg_raw = 0, stretch_raw = 0;
@@ -136,38 +138,48 @@ int main(void)
 		  adcFlag1 = 0;
 		  adcFlag2 = 0;
 
-		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
 
 		  	emg_raw = adcval1[0];
 		  	stretch_raw = adcval2[0];
 
-		  	C = (float)stretch_raw*IN_STRAY_CAP_TO_GND / (float)(MAX_ADC_VALUE - stretch_raw);
-
-			float filtered_emg_raw =BWHPF((float)emg_raw, 20);
+			float filtered_emg_raw =BWHPF((float)emg_raw, 10);
 			float emg_rec = fabs(filtered_emg_raw);
-			float filtered_emg = BWLPF(emg_rec);
+			float filtered_emg = BWLPF(emg_rec, 10);
 
 			float neural_activation = NEURAL_ACTIVATION(filtered_emg);
 			float muscle_activation = MUSCLE_ACTIVATION(neural_activation);
 
 			__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, muscle_activation);
 
-			float stretch_hpf = BWHPF((float) stretch_raw, 50);
+			//float stretch_hpf = BWHPF((float) stretch_raw, 20);
+			float stretch_lpf = (BWLPF((float)stretch_raw, 20)-3187)/575*200;
+			if (stretch_lpf < 0){
+				stretch_lpf = 0;
+			}
+			//C = stretch_raw*IN_STRAY_CAP_TO_GND / (float)(MAX_ADC_VALUE - stretch_raw);
+			//float C = t_sat/(-res*log(1-((float)stretch_raw/adc_val_max)));
+			//float C_lpf = BWLPF(C, 20);
 			//float l_knee_F = FORCE_GENERATION(muscle_activation, );
 			//printf("%f", neural_activation);
 			//printf("%"PRIu32, emg_raw);
 			//printf(",");
-			printf("%f", filtered_emg_raw);
+			//printf("%f", filtered_emg_raw);
 			//printf("%f\r\n", muscle_activation);
 			//printf("%f\r\n", C);
 			//printf(",");
 			//printf("%f\r\n", C_filtered);
 		  	//printf("%"PRIu32, emg_raw);
-		  	printf(",");
-		  	printf("%f\r\n", stretch_hpf);
-		  	//printf("%f\r\n", C);
-		  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+		  	//printf(",");
+		  	printf("%f\r\n", stretch_lpf);
+			//printf("%f\r\n", C);
 
+			//printf("%f\r\n", (float)stretch_raw);
+			//printf("%"PRIu32, stretch_raw);
+			//printf(",");
+		  	//printf("%f\r\n", C_lpf);
+
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
 	  }
     /* USER CODE END WHILE */
 
@@ -409,7 +421,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 230400;
+  huart2.Init.BaudRate = 460800;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
