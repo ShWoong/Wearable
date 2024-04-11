@@ -146,7 +146,7 @@ int main(void)
 	  if(adc2Flag == 1){
 		  adc2Flag = 0;
 		  stretch_raw = adcval2[0];
-		  time = time + 0.00001;
+		  time = time + 0.0005;
 	  }
 
 	  if(stretch_raw >= 2588 && cgFlag ==1){
@@ -395,7 +395,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 890;
+  htim2.Init.Prescaler = 4499;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 1;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
