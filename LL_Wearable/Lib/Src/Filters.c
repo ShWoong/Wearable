@@ -146,8 +146,8 @@ float BWLPF(float input, int8_t ch) {
 		for (int i = 0; i < SECTIONS; i++) {
 			xn = (i == 0) ? input : output;
 
-			output = lpf_sos_5[i][0] * xn + lpf_sos_5[i][1] * lpf_x_buffer20[i][0] + lpf_sos_5[i][2] * lpf_x_buffer20[i][1]
-			- lpf_sos_5[i][4] * lpf_y_buffer20[i][0] - lpf_sos_5[i][5] * lpf_y_buffer20[i][1];
+			output = lpf_sos_6[i][0] * xn + lpf_sos_6[i][1] * lpf_x_buffer20[i][0] + lpf_sos_6[i][2] * lpf_x_buffer20[i][1]
+			- lpf_sos_6[i][4] * lpf_y_buffer20[i][0] - lpf_sos_6[i][5] * lpf_y_buffer20[i][1];
 
 			lpf_x_buffer20[i][1] = lpf_x_buffer20[i][0];
 			lpf_x_buffer20[i][0] = xn;
@@ -262,7 +262,7 @@ float HighPassFilter_Process(float input) {
 }*/
 
 /****************************************************MOVING AVERAGE FILTER****************************************************/
-/*float MAF(float new_sample) {
+float MAF(float new_sample) {
     static float samples[SAMPLE_SIZE] = {0};
     static int index = 0;
     static float sum = 0;

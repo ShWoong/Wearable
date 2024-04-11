@@ -6,10 +6,10 @@
 
 #define FILTER_ORDER 2
 #define SECTIONS 2
-/*#define FILTER_TAP_NUM 100
-#define SAMPLE_SIZE 50
+//#define FILTER_TAP_NUM 100
+#define SAMPLE_SIZE 100
 #define FILTER_TAP_NUM 100
-#define HPFILTER_TAP_NUM 101*/
+#define HPFILTER_TAP_NUM 101
 
 float BWHPF(float input, int8_t ch);
 float BWLPF(float input, int8_t ch);
@@ -18,10 +18,10 @@ float MUSCLE_ACTIVATION(float neural_activation);
 float FORCE_GENERATION(float muscle_activation, float muscle_fiber_length, float muscle_contraction_velocity);
 float STRETCH_SENSOR(void);
 float EMG_SENSOR(void);
-/*void FIRF_Init(void);
+void FIRF_Init(void);
 float FIRF_Process(float input);
 float MAF(float new_sample);
-float EWMAF(float new_measurement, float prev_ewma, float alpha);
+/*float EWMAF(float new_measurement, float prev_ewma, float alpha);
 
 void HighPassFilter_Init(void);
 float HighPassFilter_Process(float input);

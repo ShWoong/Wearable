@@ -50,14 +50,18 @@ ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc1;
 DMA_HandleTypeDef hdma_adc2;
 
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t Tim3Flag = 0;
-volatile uint8_t adcFlag1 = 0;
-volatile uint8_t adcFlag2 = 0;
+volatile uint8_t adc1Flag = 0;
+volatile uint8_t adc2Flag = 0;
+volatile uint8_t BtnFlag = 0;
+volatile uint8_t capFlag = 0;
+volatile uint8_t cgFlag = 0;
 const float stray_cap = 7;
 const float adc_val_max = 4095;
 float t_sat = 0.035;
@@ -65,7 +69,8 @@ float res = 0.00095;
 uint32_t adcval1[1];
 uint32_t adcval2[1];
 uint32_t emg_raw = 0, stretch_raw = 0;
-float  emg_rec = 0, filtered_emg = 0, neural_activation = 0, muscle_activation = 0, C = 0, C_filtered = 0;
+uint32_t R = 5190;
+float  emg_rec = 0, filtered_emg = 0, neural_activation = 0, muscle_activation = 0, C = 0, C_filtered = 0, time = 0, cap = 0, stretch_lpf = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -76,6 +81,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 int _write(int file, char* p, int len){
 	HAL_UART_Transmit(&huart2, p, len, 10);
@@ -122,10 +128,13 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM3_Init();
   MX_ADC2_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim2);
   HAL_ADC_Start_DMA(&hadc1, adcval1, 1);
   HAL_ADC_Start_DMA(&hadc2, adcval2, 1);
+
   //HAL_ADC_Start_DMA(&hadc2, adcval2, 1);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   /* USER CODE END 2 */
@@ -134,14 +143,33 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(adcFlag1 == 1 && adcFlag2 == 1){
-		  adcFlag1 = 0;
-		  adcFlag2 = 0;
+	  if(adc2Flag == 1){
+		  adc2Flag = 0;
+		  stretch_raw = adcval2[0];
+		  time = time + 0.00001;
+	  }
 
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+	  if(stretch_raw >= 2588 && cgFlag ==1){
+	  			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+	  			cap = time/R;
+	  			  capFlag = 1;
+	  			  cgFlag =0;
+
+	  		  }
+
+	  		  else if(stretch_raw <=3.9){
+	  			  time = 0;
+	  			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+	  			  cgFlag = 1;
+	  		  }
+
+	  if(adc1Flag == 1 && capFlag == 1){
+		  adc1Flag = 0;
+		  capFlag = 0;
+
+		  //HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
 
 		  	emg_raw = adcval1[0];
-		  	stretch_raw = adcval2[0];
 
 			float filtered_emg_raw =BWHPF((float)emg_raw, 10);
 			float emg_rec = fabs(filtered_emg_raw);
@@ -151,12 +179,11 @@ int main(void)
 			float muscle_activation = MUSCLE_ACTIVATION(neural_activation);
 
 			__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, muscle_activation);
-
+			//stretch_lpf = (BWLPF((float)stretch_raw, 20));
+			//float capmaf = MAF(cap);
+			//float st_f = MAF((float)stretch_raw);
 			//float stretch_hpf = BWHPF((float) stretch_raw, 20);
-			float stretch_lpf = (BWLPF((float)stretch_raw, 20)-3187)/575*200;
-			if (stretch_lpf < 0){
-				stretch_lpf = 0;
-			}
+
 			//C = stretch_raw*IN_STRAY_CAP_TO_GND / (float)(MAX_ADC_VALUE - stretch_raw);
 			//float C = t_sat/(-res*log(1-((float)stretch_raw/adc_val_max)));
 			//float C_lpf = BWLPF(C, 20);
@@ -171,15 +198,18 @@ int main(void)
 			//printf("%f\r\n", C_filtered);
 		  	//printf("%"PRIu32, emg_raw);
 		  	//printf(",");
-		  	printf("%f\r\n", stretch_lpf);
+		  	//printf("%u\r\n", stretch_raw);
+			//printf("%f\r\n", st_f);
 			//printf("%f\r\n", C);
-
+			printf("%f", cap*1000000);
+			printf(",");
+			printf("%f\r\n", time);
 			//printf("%f\r\n", (float)stretch_raw);
 			//printf("%"PRIu32, stretch_raw);
 			//printf(",");
 		  	//printf("%f\r\n", C_lpf);
 
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+			//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
 	  }
     /* USER CODE END WHILE */
 
@@ -265,7 +295,7 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
@@ -321,11 +351,11 @@ static void MX_ADC2_Init(void)
   hadc2.Init.ContinuousConvMode = DISABLE;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
   hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc2.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO;
+  hadc2.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T2_TRGO;
   hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc2.Init.NbrOfConversion = 1;
   hadc2.Init.DMAContinuousRequests = ENABLE;
-  hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc2.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc2) != HAL_OK)
   {
     Error_Handler();
@@ -343,6 +373,51 @@ static void MX_ADC2_Init(void)
   /* USER CODE BEGIN ADC2_Init 2 */
 
   /* USER CODE END ADC2_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 890;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 1;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -366,9 +441,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 900;
+  htim3.Init.Prescaler = 899;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 100;
+  htim3.Init.Period = 99;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -478,13 +553,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(Cg_GPIO_Port, Cg_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pin : Btn_Pin */
+  GPIO_InitStruct.Pin = Btn_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(Btn_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
@@ -493,12 +568,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PC4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  /*Configure GPIO pin : Cg_Pin */
+  GPIO_InitStruct.Pin = Cg_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(Cg_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -512,12 +591,24 @@ static void MX_GPIO_Init(void)
 }*/
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 	if(hadc->Instance == ADC1){
-		adcFlag1 = 1;
+		adc1Flag = 1;
 	    }
 	else if (hadc->Instance == ADC2){
-		adcFlag2 = 1;
+		adc2Flag = 1;
 		}
 }
+/*void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+
+		if(BtnFlag == 0){
+			BtnFlag = 1;
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
+		}
+		else if(BtnFlag == 1){
+			BtnFlag = 0;
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+		}
+	  }*/
+
 /* USER CODE END 4 */
 
 /**

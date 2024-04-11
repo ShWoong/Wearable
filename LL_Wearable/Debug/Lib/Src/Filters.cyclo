@@ -1,5 +1,6 @@
 ../Lib/Src/Filters.c:49:7:BWHPF	7
 ../Lib/Src/Filters.c:126:7:BWLPF	7
+../Lib/Src/Filters.c:265:7:MAF	1
 ../Lib/Src/Filters.c:305:7:NEURAL_ACTIVATION	2
 ../Lib/Src/Filters.c:320:7:MUSCLE_ACTIVATION	1
 ../Lib/Src/Filters.c:329:7:FORCE_GENERATION	3
