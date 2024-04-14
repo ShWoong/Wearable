@@ -7,7 +7,7 @@
 #define FILTER_ORDER 2
 #define SECTIONS 2
 //#define FILTER_TAP_NUM 100
-#define SAMPLE_SIZE 100
+#define SAMPLE_SIZE 10
 #define FILTER_TAP_NUM 100
 #define HPFILTER_TAP_NUM 101
 

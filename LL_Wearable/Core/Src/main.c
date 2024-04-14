@@ -69,8 +69,8 @@ float res = 0.00095;
 uint32_t adcval1[1];
 uint32_t adcval2[1];
 uint32_t emg_raw = 0, stretch_raw = 0;
-uint32_t R = 5190;
-float  emg_rec = 0, filtered_emg = 0, neural_activation = 0, muscle_activation = 0, C = 0, C_filtered = 0, time = 0, cap = 0, stretch_lpf = 0;
+uint32_t R = 900500;
+float  emg_rec = 0, filtered_emg = 0, neural_activation = 0, muscle_activation = 0, C = 0, C_filtered = 0, time = 0, cap = 0, stretch_lpf = 0, L = 0;;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -146,18 +146,24 @@ int main(void)
 	  if(adc2Flag == 1){
 		  adc2Flag = 0;
 		  stretch_raw = adcval2[0];
-		  time = time + 0.0005;
+		  time = time + 0.00001;
+		  //printf("%u\r\n", stretch_raw);
 	  }
 
-	  if(stretch_raw >= 2588 && cgFlag ==1){
+	  if(stretch_raw >= 2814.771 && cgFlag ==1){
 	  			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
-	  			cap = time/R;
+	  			cap = time/R*1000000000000;
+
+	  			if(cap<140){
+	  				cap = 140;
+	  			}
+
+
 	  			  capFlag = 1;
 	  			  cgFlag =0;
-
 	  		  }
 
-	  		  else if(stretch_raw <=3.9){
+	  		  else if(stretch_raw <=614.4){
 	  			  time = 0;
 	  			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);
 	  			  cgFlag = 1;
@@ -179,7 +185,8 @@ int main(void)
 			float muscle_activation = MUSCLE_ACTIVATION(neural_activation);
 
 			__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, muscle_activation);
-			//stretch_lpf = (BWLPF((float)stretch_raw, 20));
+			float caplpf = (BWLPF(cap, 20));
+			L = (caplpf-140)*0.041379;
 			//float capmaf = MAF(cap);
 			//float st_f = MAF((float)stretch_raw);
 			//float stretch_hpf = BWHPF((float) stretch_raw, 20);
@@ -201,9 +208,12 @@ int main(void)
 		  	//printf("%u\r\n", stretch_raw);
 			//printf("%f\r\n", st_f);
 			//printf("%f\r\n", C);
-			printf("%f", cap*1000000);
-			printf(",");
-			printf("%f\r\n", time);
+			printf("%.2f cm", L);
+			printf(", ");
+			printf("%.2f pF\r\n", caplpf);
+			//printf("%fs\r\n", time);
+			//printf("%f\r\n", capmaf);
+
 			//printf("%f\r\n", (float)stretch_raw);
 			//printf("%"PRIu32, stretch_raw);
 			//printf(",");
@@ -395,7 +405,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 4499;
+  htim2.Init.Prescaler = 449;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 1;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
